@@ -596,35 +596,42 @@ public:
         - value: 20
         - value: 16
       tools:
-        - icon: text_tool
-          value: text
-        - icon: line_tool
-          value: line
-        - icon: circle_tool
-          value: ellipse
-        - icon: triangle_tool
-          value: triangle
-        - icon: rectangle_tool
-          value: rectangle
-        - icon: pen_tool
-          value: pencil
-        - icon: hand
-          value: hand
+
+      - icon: eraser_tool
+        value: eraser
+      - icon: text_tool
+        value: text
+      - icon: line_tool
+        value: line
+      - icon: circle_tool
+        value: ellipse
+      - icon: triangle_tool
+        value: triangle
+      - icon: rectangle_tool
+        value: rectangle
+      - icon: pen_tool
+        value: pencil
+      - icon: hand
+        value: hand
       presenterTools:
-        - text
-        - line
-        - ellipse
-        - triangle
-        - rectangle
-        - pencil
-        - hand
+      - eraser
+      - text
+      - line
+      - ellipse
+      - triangle
+      - rectangle
+      - pencil
+      - hand
       multiUserTools:
-        - text
-        - line
-        - ellipse
-        - triangle
-        - rectangle
-        - pencil
+      - eraser
+      - text
+      - line
+      - ellipse
+      - triangle
+      - rectangle
+      - pencil
+      - hand
+
   clientLog:
     server:
       enabled: false
