@@ -168,18 +168,7 @@ export default class WhiteboardOverlay extends Component {
 
     const { tool } = drawSettings;
 
-    if (tool === 'triangle' || tool === 'rectangle' || tool === 'ellipse' || tool === 'line') {
-      if (window.PointerEvent) {
-        return (
-          <ShapePointerListener
-            userId={userId}
-            actions={actions}
-            drawSettings={drawSettings}
-            whiteboardId={whiteboardId}
-          />
-        );
-      }
-
+    if (tool === 'triangle' || tool === 'rectangle' || tool === 'ellipse' || tool === 'line' || tool === 'eraser') {
       return (
         <ShapeDrawListener
           userId={userId}
