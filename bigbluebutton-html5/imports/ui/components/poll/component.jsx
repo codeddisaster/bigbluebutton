@@ -9,6 +9,7 @@ import Button from '/imports/ui/components/button/component';
 import LiveResult from './live-result/component';
 import { styles } from './styles.scss';
 import DragAndDrop from './dragAndDrop/component';
+import getFromUserSettings from '/imports/ui/services/users-settings';
 
 const intlMessages = defineMessages({
   pollPaneTitle: {
@@ -574,7 +575,8 @@ class Poll extends Component {
       currentSlide,
     } = this.props;
 
-    if (!currentSlide) return this.renderNoSlidePanel();
+
+    if (!getFromUserSettings('bbb_enable_chat', Meteor.settings.public.chat.enabled) && !currentSlide) return this.renderNoSlidePanel();
 
     if (isPolling || (!isPolling && currentPoll)) {
       return this.renderActivePollOptions();

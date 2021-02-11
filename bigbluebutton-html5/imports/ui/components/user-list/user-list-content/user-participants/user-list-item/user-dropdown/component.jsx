@@ -20,6 +20,7 @@ import UserName from '../user-name/component';
 import UserIcons from '../user-icons/component';
 import Service from '/imports/ui/components/user-list/service';
 import WhiteboardService from '/imports/ui/components/whiteboard/service';
+import getFromUserSettings from '/imports/ui/services/users-settings';
 
 const messages = defineMessages({
   presenter: {
@@ -135,7 +136,6 @@ const propTypes = {
   getScrollContainerRef: PropTypes.func.isRequired,
   toggleUserLock: PropTypes.func.isRequired,
 };
-const CHAT_ENABLED = Meteor.settings.public.chat.enabled;
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
 
 class UserDropdown extends PureComponent {
@@ -322,7 +322,7 @@ class UserDropdown extends PureComponent {
       ));
     }
 
-    const showChatOption = CHAT_ENABLED
+    const showChatOption = getFromUserSettings('bbb_enable_chat', Meteor.settings.public.chat.enabled)
       && enablePrivateChat
       && user.clientType !== 'dial-in-user'
       && !meetingIsBreakout

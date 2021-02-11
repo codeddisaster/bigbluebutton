@@ -7,10 +7,9 @@ import Annotations from '/imports/api/annotations';
 import Users from '/imports/api/users';
 import AnnotationsTextService from '/imports/ui/components/whiteboard/annotations/text/service';
 import { Annotations as AnnotationsLocal } from '/imports/ui/components/whiteboard/service';
-
+import getFromUserSettings from '/imports/ui/services/users-settings';
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
-const CHAT_ENABLED = CHAT_CONFIG.enabled;
 const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
 const PUBLIC_CHAT_TYPE = CHAT_CONFIG.type_public;
 const TYPING_INDICATOR_ENABLED = CHAT_CONFIG.typingIndicator.enabled;
@@ -62,7 +61,7 @@ export default withTracker(() => {
 
   let subscriptionsHandlers = SUBSCRIPTIONS.map((name) => {
     if ((!TYPING_INDICATOR_ENABLED && name.indexOf('typing') !== -1)
-      || (!CHAT_ENABLED && name.indexOf('chat') !== -1)) return;
+      || (!getFromUserSettings('bbb_enable_chat', CHAT_CONFIG.enabled) && name.indexOf('chat') !== -1)) return;
 
     return Meteor.subscribe(name, subscriptionErrorHandler);
   });
@@ -72,6 +71,27 @@ export default withTracker(() => {
     subscriptionsHandlers.push(Meteor.subscribe('users', currentUser.role, subscriptionErrorHandler));
     subscriptionsHandlers.push(Meteor.subscribe('breakouts', currentUser.role, subscriptionErrorHandler));
     subscriptionsHandlers.push(Meteor.subscribe('guestUser', currentUser.role, subscriptionErrorHandler));
+
+  }
+
+  let groupChatMessageHandler = {};
+
+  if (getFromUserSettings('bbb_enable_chat', CHAT_CONFIG.enabled)) {
+    const chats = GroupChat.find({
+      $or: [
+        {
+          meetingId,
+          access: PUBLIC_CHAT_TYPE,
+          chatId: { $ne: PUBLIC_GROUP_CHAT_ID },
+        },
+        { meetingId, users: { $all: [requesterUserId] } },
+      ],
+    }).fetch();
+
+    const chatIds = chats.map(chat => chat.chatId);
+
+    groupChatMessageHandler = Meteor.subscribe('group-chat-msg', chatIds, subscriptionErrorHandler);
+    subscriptionsHandlers.push(groupChatMessageHandler);
   }
 
   const annotationsHandler = Meteor.subscribe('annotations', {
@@ -92,32 +112,7 @@ export default withTracker(() => {
 
   subscriptionsHandlers = subscriptionsHandlers.filter(obj => obj);
   const ready = subscriptionsHandlers.every(handler => handler.ready());
-  let groupChatMessageHandler = {};
 
-  if (CHAT_ENABLED && ready) {
-    const chats = GroupChat.find({
-      $or: [
-        {
-          meetingId,
-          access: PUBLIC_CHAT_TYPE,
-          chatId: { $ne: PUBLIC_GROUP_CHAT_ID },
-        },
-        { meetingId, users: { $all: [requesterUserId] } },
-      ],
-    }).fetch();
-
-    const chatIds = chats.map(chat => chat.chatId);
-
-    const subHandler = {
-      ...subscriptionErrorHandler,
-      onStop: () => {
-        const event = new Event(EVENT_NAME);
-        window.dispatchEvent(event);
-      },
-    };
-
-    groupChatMessageHandler = Meteor.subscribe('group-chat-msg', chatIds, subHandler);
-  }
 
   // TODO: Refactor all the late subscribers
   let usersPersistentDataHandler = {};

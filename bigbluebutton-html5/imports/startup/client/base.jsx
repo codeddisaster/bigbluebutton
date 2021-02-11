@@ -25,7 +25,6 @@ import VideoService from '/imports/ui/components/video-provider/service';
 import DebugWindow from '/imports/ui/components/debug-window/component';
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
-const CHAT_ENABLED = CHAT_CONFIG.enabled;
 const PUBLIC_CHAT_ID = CHAT_CONFIG.public_id;
 
 const BREAKOUT_END_NOTIFY_DELAY = 50;
@@ -162,6 +161,7 @@ class Base extends Component {
 
     if (!prevProps.subscriptionsReady && subscriptionsReady) {
       logger.info({ logCode: 'startup_client_subscriptions_ready' }, 'Subscriptions are ready');
+      this.initPanels();
     }
 
     if (prevProps.meetingExist && !meetingExist && !meetingExisted) {
@@ -197,6 +197,19 @@ class Base extends Component {
     } else if (!animations && animations !== prevProps.animations) {
       if (enabled) HTML.classList.remove('animationsEnabled');
       HTML.classList.add('animationsDisabled');
+    }
+  }
+
+  // This must be called after meteor is sufficiently initialized that getFromUserSettings can actually return results
+  initPanels() {
+    if (getFromUserSettings('bbb_show_participants_on_login', true) && !deviceInfo.isPhone) {
+      Session.set('openPanel', 'userlist');
+      if (getFromUserSettings('bbb_enable_chat', CHAT_CONFIG.enabled) && getFromUserSettings('bbb_show_public_chat_on_login', !Meteor.settings.public.chat.startClosed)) {
+        Session.set('openPanel', 'chat');
+        Session.set('idChatOpen', PUBLIC_CHAT_ID);
+      }
+    } else {
+      Session.set('openPanel', '');
     }
   }
 
@@ -397,7 +410,7 @@ const BaseContainer = withTracker(() => {
   if (Session.equals('openPanel', undefined) || Session.equals('subscriptionsReady', true)) {
     if (!checkedUserSettings) {
       if (getFromUserSettings('bbb_show_participants_on_login', Meteor.settings.public.layout.showParticipantsOnLogin) && !deviceInfo.isPhone) {
-        if (CHAT_ENABLED && getFromUserSettings('bbb_show_public_chat_on_login', !Meteor.settings.public.chat.startClosed)) {
+        if (getFromUserSettings('bbb_enable_chat', CHAT_CONFIG.enabled) && getFromUserSettings('bbb_show_public_chat_on_login', !Meteor.settings.public.chat.startClosed)) {
           Session.set('openPanel', 'chat');
           Session.set('idChatOpen', PUBLIC_CHAT_ID);
         } else {
@@ -412,6 +425,8 @@ const BaseContainer = withTracker(() => {
       }
     }
   }
+
+//  Session.setDefault('openPanel', '');
 
   const codeError = Session.get('codeError');
   const { streams: usersVideo } = VideoService.getVideoStreams();

@@ -13,6 +13,7 @@ import AudioService from '/imports/ui/components/audio/service';
 import logger from '/imports/startup/client/logger';
 import WhiteboardService from '/imports/ui/components/whiteboard/service';
 import { Session } from 'meteor/session';
+import getFromUserSettings from '/imports/ui/services/users-settings';
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
 const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
@@ -210,7 +211,7 @@ const isMe = userId => userId === Auth.userID;
 const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
 
   if (_.isEmpty(groupChats) && _.isEmpty(users)) return [];
-  
+
   const chatIds = Object.keys(groupChats);
   const lastTimeWindows = chatIds.reduce((acc, chatId) => {
     const chat = groupChatsMessages[chatId];
@@ -222,18 +223,18 @@ const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
     }
   }, {});
 
-  chatIds.sort((a,b) => { 
+  chatIds.sort((a,b) => {
     if (a === PUBLIC_GROUP_CHAT_ID) {
       return -1;
     }
-  
+
     if (lastTimeWindows[a] === lastTimeWindows[b]){
       return 0;
     }
-    
+
     return 1;
   });
-  
+
   const chatInfo = chatIds.map((chatId) => {
     const contextChat = groupChatsMessages[chatId];
     const isPublicChat = chatId === PUBLIC_GROUP_CHAT_ID;
@@ -241,7 +242,7 @@ const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
     if (contextChat) {
       const unreadTimewindows = contextChat.unreadTimeWindows;
       for (const unreadTimeWindowId of unreadTimewindows) {
-        const timeWindow = (isPublicChat 
+        const timeWindow = (isPublicChat
           ? contextChat?.preJoinMessages[unreadTimeWindowId] || contextChat?.posJoinMessages[unreadTimeWindowId]
           : contextChat?.messageGroups[unreadTimeWindowId]);
         unreadMessagesCount += timeWindow.content.length;
@@ -275,7 +276,7 @@ const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
       shouldDisplayInChatList: true
     };
   });
-  
+
   const currentClosedChats = Storage.getItem(CLOSED_CHAT_LIST_KEY) || [];
   return chatInfo.filter(chat => !currentClosedChats.includes(chat.chatId) && chat.shouldDisplayInChatList);
 }
@@ -340,7 +341,7 @@ const getAvailableActions = (amIModerator, isBreakoutRoom, subjectUser, subjectV
   const isSubjectUserGuest = subjectUser.guest;
 
   const hasAuthority = amIModerator || amISubjectUser;
-  const allowedToChatPrivately = !amISubjectUser && !isDialInUser;
+  const allowedToChatPrivately = !amISubjectUser && !isDialInUser && getFromUserSettings('bbb_enable_private_chat', true);
   const allowedToMuteAudio = hasAuthority
     && subjectVoiceUser.isVoiceUser
     && !subjectVoiceUser.isMuted
